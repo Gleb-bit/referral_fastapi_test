@@ -1,0 +1,58 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: always
+    volumes:
+      - ./backend:/backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: postgres:16.1-alpine
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    env_file:
+      - .env
+
+#  rabbit:
+#    container_name: rabbit
+#    restart: always
+#    image: rabbitmq:3.10
+#    expose:
+#      - "5672"
+#      - "15672"
+#    volumes:
+#      - rabbitmqdata:/var/lib/rabbitmq
+
+
+#  celery:
+#    container_name: celery
+#    restart: always
+#    build:
+#      dockerfile: ./Dockerfile
+#      context: .
+#    volumes:
+#      - ./backend:/backend:cached
+#      - media:/backend/media
+#    env_file:
+#      - .env
+#    command: celery -A config.celery worker --beat --loglevel=info
+#    depends_on:
+#      - backend
+#      - db
+#      - rabbit
+
+volumes:
+  pgdata:

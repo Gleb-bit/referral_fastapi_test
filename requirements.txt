@@ -1,0 +1,10 @@
+alembic==1.13.2
+asgiref==3.8.1
+asyncpg==0.29.0
+black==24.10.0
+fastapi[all]==0.115.0
+sqlalchemy==2.0.35
+passlib==1.7.4
+pyjwt==2.9.0
+pytz==2024.2
+uvicorn==0.30.6
