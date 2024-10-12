@@ -20,8 +20,11 @@ class User(Base):
     refer_code = Column(String)
 
     code = relationship(
-        "UserCode", back_populates="user", uselist=False, cascade="all, delete-orphan",
-        lazy="selectin"
+        "UserCode",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -32,8 +35,8 @@ class UserCode(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    code = Column(String, unique=True, nullable=False)
+    code = Column(String, nullable=False)
     expiration_in_days = Column(Integer, nullable=False)
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
     user = relationship("User", back_populates="code")
