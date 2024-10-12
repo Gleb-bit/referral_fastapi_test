@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models import User, UserCode
@@ -36,8 +35,9 @@ async def delete_ref_code(
     session: AsyncSession = Depends(get_session),
     credentials: TokenSerializer = Depends(auth.get_current_user),
 ):
-    user = await Orm.scalar(User, session, User.email == credentials.email)
+    user = await Orm.scalar(User, session, User.email == credentials.email, User.code)
     code = user.code
+
     if not code:
         raise HTTPException(401, "Code does not exist")
 
@@ -53,11 +53,14 @@ async def get_ref_code(
     session: AsyncSession = Depends(get_session),
     credentials: TokenSerializer = Depends(auth.get_current_user),
 ):
-    user = await Orm.scalar(User, session, User.email == ref_email)
+    user = await Orm.scalar(User, session, User.email == ref_email, User.code)
     if not user:
         raise HTTPException(401, "User not found")
 
-    return ReferrerCodeGetSerializer(code=user.code.code)
+    if not (user_code := user.code):
+        raise HTTPException(401, "Code does not exist")
+
+    return ReferrerCodeGetSerializer(code=user_code.code)
 
 
 @referral_router.get(
@@ -68,16 +71,18 @@ async def get_referrals(
     session: AsyncSession = Depends(get_session),
     credentials: TokenSerializer = Depends(auth.get_current_user),
 ):
-    referrer = await Orm.scalar(User, session, User.id == referrer_id)
+    referrer = await Orm.scalar(User, session, User.id == referrer_id, User.code)
 
     if not referrer:
         raise HTTPException(401, "Referrer not found")
 
-    if not referrer.code:
+    if not (referrer_code := referrer.code):
         return ReferralsSerializer(referrals=[])
 
-    referrals = await Orm.where(User, User.refer_code == referrer.code.code, session)
+    referrals = await Orm.where(User, User.refer_code == referrer_code.code, session)
 
     return ReferralsSerializer(
-        referrals=[UserReadSerializer.from_orm(user) for user in referrals.scalars().all()]
+        referrals=[
+            UserReadSerializer.from_orm(user) for user in referrals.scalars().all()
+        ]
     )

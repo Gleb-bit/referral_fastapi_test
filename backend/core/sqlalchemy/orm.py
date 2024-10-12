@@ -80,16 +80,16 @@ class Orm:
             `Query result filtered by the dictionary fields.`
         """
 
-        query = select(model).filter_by(**filter_data)
+        query = select(model)
+
+        if relations:
+            query = cls.get_query_with_relations(query, relations)
 
         if exclude_data:
             exclude_query = select(model).filter_by(**exclude_data)
             query = query.except_(exclude_query)
 
-        if relations:
-            query = cls.get_query_with_relations(query, relations)
-
-        return await session.execute(query)
+        return await session.execute(query.filter_by(**filter_data))
 
     @classmethod
     async def insert(cls, model, data: list, session: AsyncSession, return_data=None):
@@ -159,8 +159,8 @@ class Orm:
         :return:
             `Query result filtered by the given expression.`
         """
-        query = select(model).where(filter_expr)
+        query = select(model)
         if relations:
             query = cls.get_query_with_relations(query, relations)
 
-        return await session.execute(query)
+        return await session.execute(query.where(filter_expr))
